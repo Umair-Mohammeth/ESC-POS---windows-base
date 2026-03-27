@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "AA8RXeLzZ4k=",
+  "success": true,
+  "projectFilePath": "D:\\web\\pos softwaer\\ESC-POS - windows base\\POSWinForms\\POSWinForms.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Umair\\.nuget\\packages\\entityframework\\6.4.4\\entityframework.6.4.4.nupkg.sha512",
+    "C:\\Users\\Umair\\.nuget\\packages\\stub.system.data.sqlite.core.netframework\\1.0.118\\stub.system.data.sqlite.core.netframework.1.0.118.nupkg.sha512",
+    "C:\\Users\\Umair\\.nuget\\packages\\system.data.sqlite\\1.0.118\\system.data.sqlite.1.0.118.nupkg.sha512",
+    "C:\\Users\\Umair\\.nuget\\packages\\system.data.sqlite.core\\1.0.118\\system.data.sqlite.core.1.0.118.nupkg.sha512",
+    "C:\\Users\\Umair\\.nuget\\packages\\system.data.sqlite.ef6\\1.0.118\\system.data.sqlite.ef6.1.0.118.nupkg.sha512",
+    "C:\\Users\\Umair\\.nuget\\packages\\system.data.sqlite.linq\\1.0.118\\system.data.sqlite.linq.1.0.118.nupkg.sha512"
+  ],
+  "logs": []
+}

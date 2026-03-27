@@ -1,0 +1,14 @@
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.csproj.AssemblyReference.cache
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.GeneratedMSBuildEditorConfig.editorconfig
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.csproj.CoreCompileInputs.cache
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\POSWinForms.exe.config
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\POSWinForms.exe
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\POSWinForms.pdb
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\EntityFramework.SqlServer.dll
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\EntityFramework.dll
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\System.Data.SQLite.dll
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\System.Data.SQLite.EF6.dll
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\System.Data.SQLite.Linq.dll
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.exe
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.pdb
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinFo.84A06606.Up2Date
