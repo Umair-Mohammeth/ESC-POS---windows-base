@@ -124,10 +124,10 @@ namespace POSWinForms.Views
 
             var (rev, txn, avg, topProd) = activePeriod switch
             {
-                "Today"     => ("$1,420.50", "45",  "$31.56", "Espresso"),
-                "Yesterday" => ("$2,105.00", "88",  "$23.92", "Cappuccino"),
-                "This Week" => ("$9,204.80", "308", "$29.88", "Espresso"),
-                _           => ("$34,120.00","1,402","$24.34","Espresso"),
+                "Today"     => ("Rs. 1,420.50", "45",  "Rs. 31.56", "Espresso"),
+                "Yesterday" => ("Rs. 2,105.00", "88",  "Rs. 23.92", "Cappuccino"),
+                "This Week" => ("Rs. 9,204.80", "308", "Rs. 29.88", "Espresso"),
+                _           => ("Rs. 34,120.00","1,402","Rs. 24.34","Espresso"),
             };
 
             kpiRow.Controls.Add(MakeKpiCard("💰 Revenue",         rev,      UITheme.ColGreen),  0, 0);
@@ -169,11 +169,11 @@ namespace POSWinForms.Views
 
             var rows = new[]
             {
-                new[] { "2026-03-27", "09:15", "Staff_01",  "3", "$55.00",  "Cash"  },
-                new[] { "2026-03-27", "09:02", "Staff_01",  "1", "$18.50",  "Card"  },
-                new[] { "2026-03-27", "08:47", "Admin",     "5", "$104.20", "Cash"  },
-                new[] { "2026-03-27", "08:30", "Manager_X", "2", "$32.00",  "Card"  },
-                new[] { "2026-03-27", "08:11", "Staff_01",  "4", "$76.80",  "Cash"  },
+                new[] { "2026-03-27", "09:15", "Staff_01",  "3", "Rs. 55.00",  "Cash"  },
+                new[] { "2026-03-27", "09:02", "Staff_01",  "1", "Rs. 18.50",  "Card"  },
+                new[] { "2026-03-27", "08:47", "Admin",     "5", "Rs. 104.20", "Cash"  },
+                new[] { "2026-03-27", "08:30", "Manager_X", "2", "Rs. 32.00",  "Card"  },
+                new[] { "2026-03-27", "08:11", "Staff_01",  "4", "Rs. 76.80",  "Cash"  },
             };
             bool alt = false;
             foreach (var r in rows)

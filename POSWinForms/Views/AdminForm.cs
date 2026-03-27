@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using POSWinForms.Data;
+using System.Data.SQLite;
 
 namespace POSWinForms.Views
 {
@@ -14,6 +16,41 @@ namespace POSWinForms.Views
             this.BackColor = UITheme.ColBackground;
             this.Font = UITheme.FontBody;
             InitializeComponents();
+            LoadUsersFromDatabase();
+        }
+
+        private void LoadUsersFromDatabase()
+        {
+            lvUsers.Items.Clear();
+            try
+            {
+                var db = DatabaseContext.Instance;
+                db.Connection.Open();
+                using var cmd = db.Connection.CreateCommand();
+                cmd.CommandText = "SELECT name, role, pin FROM users ORDER BY role ASC";
+                using var reader = cmd.ExecuteReader();
+                
+                bool alt = false;
+                while (reader.Read())
+                {
+                    string name = reader["name"].ToString();
+                    string role = reader["role"].ToString();
+                    string pin = "****"; // Mask PIN for security
+                    string lastLogin = "—"; // Placeholder
+
+                    string initials = name.Length > 0 ? name[0].ToString().ToUpper() : "?";
+                    var item = new ListViewItem(new[] { initials, name, role, pin, lastLogin, "✏ Edit", "🗑 Del" });
+                    item.BackColor = alt ? UITheme.ColRowAlt : UITheme.ColCard;
+                    item.SubItems[2].ForeColor = UITheme.RoleColour(role);
+                    lvUsers.Items.Add(item);
+                    alt = !alt;
+                }
+                db.Connection.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading users: " + ex.Message);
+            }
         }
 
         private void InitializeComponents()
@@ -31,7 +68,7 @@ namespace POSWinForms.Views
             };
             var lblSub = new Label
             {
-                Text = "Add, edit, or remove system users and their access roles.",
+                Text = "Manage system users and access roles from the database.",
                 Font = UITheme.FontBody,
                 ForeColor = UITheme.ColTextMuted,
                 Location = new Point(0, 28),
@@ -42,6 +79,10 @@ namespace POSWinForms.Views
             var btnAddUser = new Button { Text = "＋  Add User", Location = new Point(0, 64), Size = new Size(130, 36) };
             UITheme.StylePrimary(btnAddUser);
             btnAddUser.Click += (s, e) => ShowUserPanel(null);
+
+            var btnRefresh = new Button { Text = "🔄  Refresh", Location = new Point(140, 64), Size = new Size(100, 36) };
+            UITheme.StyleSecondary(btnRefresh);
+            btnRefresh.Click += (s, e) => LoadUsersFromDatabase();
 
             // ── User ListView ─────────────────────────────────────────────
             lvUsers = new ListView
@@ -77,29 +118,7 @@ namespace POSWinForms.Views
                 e.Graphics.FillRectangle(b, 0, 5, 880, 1);
             };
 
-            // Mock users
-            var users = new[]
-            {
-                new { Name="Admin",      Role="Admin",     Pin="****", LastLogin="2026-03-27  10:15 AM" },
-                new { Name="Manager_X",  Role="Manager",   Pin="****", LastLogin="2026-03-27  09:30 AM" },
-                new { Name="Staff_01",   Role="Cashier",   Pin="****", LastLogin="2026-03-27  08:45 AM" },
-                new { Name="Inventory1", Role="Inventory", Pin="****", LastLogin="2026-03-26  06:00 PM" },
-            };
-
-            bool alt = false;
-            foreach (var u in users)
-            {
-                // Avatar text (initials)
-                string initials = u.Name.Length > 0 ? u.Name[0].ToString().ToUpper() : "?";
-                var item = new ListViewItem(new[] { initials, u.Name, u.Role, u.Pin, u.LastLogin, "✏ Edit", "🗑 Del" });
-                item.BackColor = alt ? UITheme.ColRowAlt : UITheme.ColCard;
-                // Role chip colour via sub-item ForeColor
-                item.SubItems[2].ForeColor = UITheme.RoleColour(u.Role);
-                alt = !alt;
-                lvUsers.Items.Add(item);
-            }
-
-            pad.Controls.AddRange(new Control[] { lblTitle, lblSub, btnAddUser, colHeader, lvUsers });
+            pad.Controls.AddRange(new Control[] { lblTitle, lblSub, btnAddUser, btnRefresh, colHeader, lvUsers });
             this.Controls.Add(pad);
         }
 

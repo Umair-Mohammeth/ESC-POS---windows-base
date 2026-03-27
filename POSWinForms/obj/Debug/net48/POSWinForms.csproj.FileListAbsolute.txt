@@ -12,3 +12,4 @@ D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\bin\Debug\net48\System.Da
 D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.exe
 D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.pdb
 D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinFo.84A06606.Up2Date
+D:\web\pos softwaer\ESC-POS - windows base\POSWinForms\obj\Debug\net48\POSWinForms.sourcelink.json

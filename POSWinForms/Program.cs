@@ -11,13 +11,23 @@ namespace POSWinForms
             try
             {
                 Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                // Start with login screen so user can authenticate by PIN
+                
+                try {
+                    Application.SetCompatibleTextRenderingDefault(false);
+                } catch (InvalidOperationException) {
+                    // SetCompatibleTextRenderingDefault can only be called before any controls are created.
+                    // If a static initializer touched WinForms early, this will fail. We can safely ignore it.
+                }
+
                 Application.Run(new Views.LoginForm());
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Silent catch or simplified report
+                string msg = ex.Message;
+                if (ex.InnerException != null) msg += "\nInner: " + ex.InnerException.Message;
+                
+                MessageBox.Show($"Application crashed:\n\n{msg}\n\nStack Trace:\n{ex.StackTrace}",
+                                "Critical Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

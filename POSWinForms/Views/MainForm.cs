@@ -185,8 +185,7 @@ namespace POSWinForms.Views
             btnLogout.FlatAppearance.MouseOverBackColor = Color.FromArgb(229, 62, 62, 62);
             btnLogout.Click += (s, e) =>
             {
-                var login = new LoginForm();
-                login.Show();
+                // Closing MainForm triggers the original LoginForm to show again
                 this.Close();
             };
             btnLogout.Paint += (s, e) =>
@@ -340,7 +339,7 @@ namespace POSWinForms.Views
             contentArea.SizeChanged += (s, e) =>
                 cardRow.Width = contentArea.Width - 48;
 
-            cardRow.Controls.Add(MakeStatCard("💰  Total Sales", "$12,450", "↑ 12% vs yesterday", UITheme.ColGreen), 0, 0);
+            cardRow.Controls.Add(MakeStatCard("💰  Total Sales", "Rs. 12,450", "↑ 12% vs yesterday", UITheme.ColGreen), 0, 0);
             cardRow.Controls.Add(MakeStatCard("🧾  Orders Today", "142", "↑ 8 since morning", UITheme.ColBlue), 1, 0);
             cardRow.Controls.Add(MakeStatCard("⚠  Low Stock", "5 items", "Needs restocking", UITheme.ColRed), 2, 0);
             cardRow.Controls.Add(MakeStatCard("👤  Active Users", "3", _user.Name + " online", UITheme.ColPurple), 3, 0);
@@ -382,11 +381,11 @@ namespace POSWinForms.Views
 
             var rows = new[]
             {
-                new[] { "#TXN-0488", "09:15 AM", "Staff_01",  "3", "$55.00",  "✔ Completed" },
-                new[] { "#TXN-0487", "09:02 AM", "Staff_01",  "1", "$18.50",  "✔ Completed" },
-                new[] { "#TXN-0486", "08:47 AM", "Admin",     "5", "$104.20", "✔ Completed" },
-                new[] { "#TXN-0485", "08:30 AM", "Manager_X", "2", "$32.00",  "↩ Refunded"  },
-                new[] { "#TXN-0484", "08:11 AM", "Staff_01",  "4", "$76.80",  "✔ Completed" },
+                new[] { "#TXN-0488", "09:15 AM", "Staff_01",  "3", "Rs. 55.00",  "✔ Completed" },
+                new[] { "#TXN-0487", "09:02 AM", "Staff_01",  "1", "Rs. 18.50",  "✔ Completed" },
+                new[] { "#TXN-0486", "08:47 AM", "Admin",     "5", "Rs. 104.20", "✔ Completed" },
+                new[] { "#TXN-0485", "08:30 AM", "Manager_X", "2", "Rs. 32.00",  "↩ Refunded"  },
+                new[] { "#TXN-0484", "08:11 AM", "Staff_01",  "4", "Rs. 76.80",  "✔ Completed" },
             };
             bool alt = false;
             foreach (var r in rows)
@@ -412,41 +411,24 @@ namespace POSWinForms.Views
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                // border
-                using var pen = new Pen(UITheme.ColBorder, 1);
-                g.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1);
-                // accent stripe
-                using var brush = new SolidBrush(accentColor);
-                g.FillRectangle(brush, 0, 0, 5, card.Height);
+                // Shadow
+                using var shadowBrush = new SolidBrush(Color.FromArgb(14, 0, 0, 0));
+                using var shadowPath = UITheme.RoundedRect(new Rectangle(3, 4, card.Width - 5, card.Height - 5), UITheme.RadiusCard);
+                g.FillPath(shadowBrush, shadowPath);
+                // Card bg
+                using var cardBrush = new SolidBrush(UITheme.ColCard);
+                using var cardPath = UITheme.RoundedRect(new Rectangle(0, 0, card.Width - 3, card.Height - 4), UITheme.RadiusCard);
+                g.FillPath(cardBrush, cardPath);
+                // Accent left stripe (rounded on left side only)
+                using var accentBrush = new SolidBrush(accentColor);
+                using var stripePath = UITheme.RoundedRect(new Rectangle(0, 0, 6, card.Height - 4), UITheme.RadiusCard);
+                g.FillPath(accentBrush, stripePath);
+                card.Region = new System.Drawing.Region(cardPath);
             };
 
-            var lblTitle = new Label
-            {
-                Text = title,
-                Font = UITheme.FontSmall,
-                ForeColor = UITheme.ColTextMuted,
-                Location = new Point(18, 16),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
-            var lblValue = new Label
-            {
-                Text = value,
-                Font = new Font("Segoe UI", 18, FontStyle.Bold),
-                ForeColor = UITheme.ColTextPrimary,
-                Location = new Point(16, 36),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
-            var lblSub = new Label
-            {
-                Text = sub,
-                Font = UITheme.FontSmall,
-                ForeColor = accentColor,
-                Location = new Point(18, 74),
-                AutoSize = true,
-                BackColor = Color.Transparent
-            };
+            var lblTitle = new Label { Text = title, Font = UITheme.FontSmall, ForeColor = UITheme.ColTextMuted, Location = new Point(18, 16), AutoSize = true, BackColor = Color.Transparent };
+            var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 18, FontStyle.Bold), ForeColor = UITheme.ColTextPrimary, Location = new Point(16, 36), AutoSize = true, BackColor = Color.Transparent };
+            var lblSub   = new Label { Text = sub,   Font = UITheme.FontSmall,  ForeColor = accentColor, Location = new Point(18, 74), AutoSize = true, BackColor = Color.Transparent };
 
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);

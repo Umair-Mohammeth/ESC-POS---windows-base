@@ -227,8 +227,13 @@ namespace POSWinForms.Views
             if (user != null)
             {
                 var main = new MainForm(user);
-                Hide();
-                main.FormClosed += (s, e) => this.Close();
+                this.Hide();
+                // When the main window is closed (logout), show the login screen again
+                main.FormClosed += (s, e) => {
+                    this.txtPin.Clear();
+                    this.lblError.Text = "";
+                    this.Show();
+                };
                 main.Show();
             }
             else

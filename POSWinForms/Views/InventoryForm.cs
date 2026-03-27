@@ -2,6 +2,8 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using POSWinForms.Data;
+using System.Data.SQLite;
 
 namespace POSWinForms.Views
 {
@@ -14,6 +16,57 @@ namespace POSWinForms.Views
             this.BackColor = UITheme.ColBackground;
             this.Font = UITheme.FontBody;
             InitializeComponents();
+            LoadProductsFromDatabase();
+        }
+
+        private void LoadProductsFromDatabase()
+        {
+            lvProducts.Items.Clear();
+            try
+            {
+                var db = DatabaseContext.Instance;
+                db.Connection.Open();
+                using var cmd = db.Connection.CreateCommand();
+                cmd.CommandText = "SELECT id, name, price, stock_quantity FROM products";
+                using var reader = cmd.ExecuteReader();
+                
+                bool alt = false;
+                while (reader.Read())
+                {
+                    string id = reader["id"].ToString();
+                    string name = reader["name"].ToString();
+                    decimal price = Convert.ToDecimal(reader["price"]);
+                    int stock = Convert.ToInt32(reader["stock_quantity"]);
+
+                    var item = new ListViewItem(new[]
+                    {
+                        $"P-{id.PadLeft(3, '0')}", // Auto SKU format
+                        name,
+                        "General", // Category placeholder if not in DB
+                        stock.ToString(),
+                        $"Rs. {price:F2}",
+                        "✏ Edit", "🗑 Del"
+                    });
+
+                    item.BackColor = stock == 0
+                        ? UITheme.ColRed.WithAlpha(30)
+                        : stock < 10
+                            ? UITheme.ColLowStock
+                            : (alt ? UITheme.ColRowAlt : UITheme.ColCard);
+                    
+                    if (stock < 10)
+                        item.SubItems[3].ForeColor = UITheme.ColRed;
+                    
+                    item.Tag = id; // Store ID for editing/deleting
+                    lvProducts.Items.Add(item);
+                    alt = !alt;
+                }
+                db.Connection.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading products: " + ex.Message);
+            }
         }
 
         private void InitializeComponents()
@@ -31,7 +84,7 @@ namespace POSWinForms.Views
             };
             var lblSub = new Label
             {
-                Text = "Manage stock levels, prices, and product catalogue.",
+                Text = "Manage live stock levels and prices directly from the database.",
                 Font = UITheme.FontBody,
                 ForeColor = UITheme.ColTextMuted,
                 Location = new Point(0, 28),
@@ -77,11 +130,12 @@ namespace POSWinForms.Views
             UITheme.StylePrimary(btnAdd);
             btnAdd.Click += (s, e) => ShowAddEditPanel(null);
 
-            // Export button
-            var btnExport = new Button { Text = "⬇  Export CSV", Location = new Point(445, 2), Size = new Size(130, 36) };
-            UITheme.StyleSecondary(btnExport);
+            // Refresh button
+            var btnRefresh = new Button { Text = "🔄", Location = new Point(445, 2), Size = new Size(40, 36) };
+            UITheme.StyleSecondary(btnRefresh);
+            btnRefresh.Click += (s, e) => LoadProductsFromDatabase();
 
-            toolBar.Controls.AddRange(new Control[] { searchWrap, btnAdd, btnExport });
+            toolBar.Controls.AddRange(new Control[] { searchWrap, btnAdd, btnRefresh });
 
             // ── Summary chips ─────────────────────────────────────────────
             var chipRow = new FlowLayoutPanel
@@ -109,6 +163,16 @@ namespace POSWinForms.Views
                 BackColor = UITheme.ColCard,
                 Font = UITheme.FontBody,
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+            };
+            lvProducts.MouseClick += (s, e) =>
+            {
+                var item = lvProducts.GetItemAt(e.X, e.Y);
+                if (item == null) return;
+                var test = lvProducts.HitTest(e.Location);
+                int col = test.Item.SubItems.IndexOf(test.SubItem);
+                
+                if (col == 5) ShowAddEditPanel(item.Tag.ToString()); // Edit column
+                if (col == 6) DeleteProduct(item.Tag.ToString());   // Delete column
             };
             lvProducts.Columns.Add("SKU",           80);
             lvProducts.Columns.Add("Product Name", 220);
@@ -193,62 +257,92 @@ namespace POSWinForms.Views
             // Placeholder: in production, use ListViewItemSorter
         }
 
-        private void ShowAddEditPanel(ListViewItem item)
+        private void ShowAddEditPanel(string productId)
         {
-            // Side-drawer panel that slides in within the form
-            var drawer = new Panel
-            {
-                Size = new Size(320, this.Size.Height),
-                Location = new Point(this.Width, 0),
-                BackColor = UITheme.ColCard,
-                Padding = new Padding(20)
-            };
-            drawer.Paint += (s, e) =>
-            {
-                using var pen = new Pen(UITheme.ColBorder, 1);
-                e.Graphics.DrawLine(pen, 0, 0, 0, drawer.Height);
-            };
+            var drawer = new Panel { Size = new Size(360, this.Height), Location = new Point(this.Width, 0), BackColor = UITheme.ColCard, Padding = new Padding(24) };
+            drawer.Paint += (s, e) => { using var pen = new Pen(UITheme.ColBorder, 1); e.Graphics.DrawLine(pen, 0, 0, 0, drawer.Height); };
 
-            var lblDrawerTitle = new Label
-            {
-                Text = item == null ? "Add Product" : "Edit Product",
-                Font = UITheme.FontH2,
-                ForeColor = UITheme.ColTextPrimary,
-                Location = new Point(20, 20),
-                AutoSize = true
-            };
+            var lblTitle = new Label { Text = productId == null ? "Add New Product" : "Edit Product", Font = UITheme.FontH2, ForeColor = UITheme.ColTextPrimary, Location = new Point(24, 24), AutoSize = true };
+            
+            int top = 80;
+            var txtName = CreateField(drawer, "Product Name", ref top);
+            var txtPrice = CreateField(drawer, "Unit Price (Rs.)", ref top);
+            var txtStock = CreateField(drawer, "Current Stock", ref top);
 
-            var fields = new[] { "SKU", "Product Name", "Category", "Stock Qty", "Price ($)" };
-            int top = 60;
-            foreach (var field in fields)
+            if (productId != null)
             {
-                var lbl = new Label { Text = field, Font = UITheme.FontSmall, ForeColor = UITheme.ColTextMuted, Location = new Point(20, top), AutoSize = true };
-                var tb  = new TextBox { Location = new Point(20, top + 18), Width = 278, Height = 32, BorderStyle = BorderStyle.FixedSingle, Font = UITheme.FontBody };
-                drawer.Controls.Add(lbl);
-                drawer.Controls.Add(tb);
-                top += 66;
+                try {
+                    var db = DatabaseContext.Instance; db.Connection.Open();
+                    using var cmd = db.Connection.CreateCommand();
+                    cmd.CommandText = "SELECT name, price, stock_quantity FROM products WHERE id=@id";
+                    cmd.Parameters.AddWithValue("@id", productId);
+                    using var r = cmd.ExecuteReader();
+                    if (r.Read()) {
+                        txtName.Text = r["name"].ToString();
+                        txtPrice.Text = Convert.ToDecimal(r["price"]).ToString("F2");
+                        txtStock.Text = r["stock_quantity"].ToString();
+                    }
+                    db.Connection.Close();
+                } catch { }
             }
 
-            var btnSave = new Button { Text = "Save Product", Location = new Point(20, top + 10), Size = new Size(278, 40) };
+            var btnSave = new Button { Text = "SAVE PRODUCT", Location = new Point(24, top + 20), Size = new Size(312, 44) };
             UITheme.StylePrimary(btnSave);
-            var btnClose = new Button { Text = "Cancel", Location = new Point(20, top + 60), Size = new Size(278, 36) };
-            UITheme.StyleSecondary(btnClose);
-            btnClose.Click += (s, e) => { this.Controls.Remove(drawer); drawer.Dispose(); };
-
-            drawer.Controls.Add(lblDrawerTitle);
-            drawer.Controls.Add(btnSave);
-            drawer.Controls.Add(btnClose);
-            this.Controls.Add(drawer);
-            drawer.BringToFront();
-            // Animate slide-in
-            var timer = new System.Windows.Forms.Timer { Interval = 10 };
-            timer.Tick += (s, e) =>
+            btnSave.Click += (s, e) =>
             {
-                if (drawer.Left > this.Width - 320)
-                    drawer.Left -= 16;
-                else { drawer.Left = this.Width - 320; timer.Stop(); }
+                if (string.IsNullOrWhiteSpace(txtName.Text)) return;
+                try {
+                    var db = DatabaseContext.Instance; db.Connection.Open();
+                    using var cmd = db.Connection.CreateCommand();
+                    if (productId == null)
+                        cmd.CommandText = "INSERT INTO products (name, price, stock_quantity) VALUES (@n, @p, @s)";
+                    else {
+                        cmd.CommandText = "UPDATE products SET name=@n, price=@p, stock_quantity=@s WHERE id=@id";
+                        cmd.Parameters.AddWithValue("@id", productId);
+                    }
+                    cmd.Parameters.AddWithValue("@n", txtName.Text);
+                    cmd.Parameters.AddWithValue("@p", decimal.Parse(txtPrice.Text));
+                    cmd.Parameters.AddWithValue("@s", int.Parse(txtStock.Text));
+                    cmd.ExecuteNonQuery();
+                    db.Connection.Close();
+                    this.Controls.Remove(drawer); LoadProductsFromDatabase();
+                } catch (Exception ex) { MessageBox.Show("Save failed: " + ex.Message); }
             };
+
+            var btnCancel = new Button { Text = "Cancel", Location = new Point(24, top + 74), Size = new Size(312, 38) };
+            UITheme.StyleSecondary(btnCancel);
+            btnCancel.Click += (s, e) => { this.Controls.Remove(drawer); drawer.Dispose(); };
+
+            drawer.Controls.AddRange(new Control[] { lblTitle, btnSave, btnCancel });
+            this.Controls.Add(drawer); drawer.BringToFront();
+            var timer = new System.Windows.Forms.Timer { Interval = 10 };
+            timer.Tick += (s, e) => { if (drawer.Left > this.Width - 360) drawer.Left -= 20; else { drawer.Left = this.Width - 360; timer.Stop(); } };
             timer.Start();
+        }
+
+        private TextBox CreateField(Panel p, string label, ref int top)
+        {
+            p.Controls.Add(new Label { Text = label, Font = UITheme.FontSmall, ForeColor = UITheme.ColTextMuted, Location = new Point(24, top), AutoSize = true });
+            var tb = new TextBox { Location = new Point(24, top + 20), Width = 312, Font = UITheme.FontBody, BorderStyle = BorderStyle.FixedSingle };
+            p.Controls.Add(tb);
+            top += 60;
+            return tb;
+        }
+
+        private void DeleteProduct(string id)
+        {
+            if (MessageBox.Show("Are you sure you want to delete this product?", "Confirm Delete", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                try {
+                    var db = DatabaseContext.Instance; db.Connection.Open();
+                    using var cmd = db.Connection.CreateCommand();
+                    cmd.CommandText = "DELETE FROM products WHERE id=@id";
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.ExecuteNonQuery();
+                    db.Connection.Close();
+                    LoadProductsFromDatabase();
+                } catch (Exception ex) { MessageBox.Show(ex.Message); }
+            }
         }
     }
 }
