@@ -56,7 +56,7 @@ namespace POSWinForms.Data
                 var count = Convert.ToInt32(cmd.ExecuteScalar());
                 if (count == 0)
                 {
-                    cmd.CommandText = "INSERT INTO users (name, pin, role) VALUES ('Admin','1111','Admin'), ('Staff','2222','Cashier')";
+                    cmd.CommandText = "INSERT INTO users (name, pin, role) VALUES ('Admin','1111','Admin'), ('Staff','2222','Cashier'), ('Manager','3333','Manager'), ('Inventory','4444','Inventory')";
                     cmd.ExecuteNonQuery();
                 }
                 Connection.Close();
