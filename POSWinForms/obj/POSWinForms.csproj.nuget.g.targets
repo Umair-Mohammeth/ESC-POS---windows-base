@@ -3,5 +3,7 @@
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Import Project="$(NuGetPackageRoot)entityframework\6.4.4\buildTransitive\EntityFramework.targets" Condition="Exists('$(NuGetPackageRoot)entityframework\6.4.4\buildTransitive\EntityFramework.targets')" />
     <Import Project="$(NuGetPackageRoot)stub.system.data.sqlite.core.netframework\1.0.118\buildTransitive\net46\Stub.System.Data.SQLite.Core.NetFramework.targets" Condition="Exists('$(NuGetPackageRoot)stub.system.data.sqlite.core.netframework\1.0.118\buildTransitive\net46\Stub.System.Data.SQLite.Core.NetFramework.targets')" />
+    <Import Project="$(NuGetPackageRoot)fody\6.5.5\build\Fody.targets" Condition="Exists('$(NuGetPackageRoot)fody\6.5.5\build\Fody.targets')" />
+    <Import Project="$(NuGetPackageRoot)costura.fody\5.7.0\build\Costura.Fody.targets" Condition="Exists('$(NuGetPackageRoot)costura.fody\5.7.0\build\Costura.Fody.targets')" />
   </ImportGroup>
 </Project>

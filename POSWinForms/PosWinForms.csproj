@@ -9,5 +9,6 @@
 
   <ItemGroup>
     <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+    <PackageReference Include="Costura.Fody" Version="5.7.0" />
   </ItemGroup>
 </Project>
