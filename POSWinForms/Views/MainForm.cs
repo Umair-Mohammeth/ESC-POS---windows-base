@@ -339,10 +339,10 @@ namespace POSWinForms.Views
             contentArea.SizeChanged += (s, e) =>
                 cardRow.Width = contentArea.Width - 48;
 
-            cardRow.Controls.Add(MakeStatCard("💰  Total Sales", "Rs. 12,450", "↑ 12% vs yesterday", UITheme.ColGreen), 0, 0);
-            cardRow.Controls.Add(MakeStatCard("🧾  Orders Today", "142", "↑ 8 since morning", UITheme.ColBlue), 1, 0);
-            cardRow.Controls.Add(MakeStatCard("⚠  Low Stock", "5 items", "Needs restocking", UITheme.ColRed), 2, 0);
-            cardRow.Controls.Add(MakeStatCard("👤  Active Users", "3", _user.Name + " online", UITheme.ColPurple), 3, 0);
+            cardRow.Controls.Add(MakeStatCard("Total Sales",  "💰", "Rs. 12,450", "↑ 12% vs yesterday", UITheme.ColGreen), 0, 0);
+            cardRow.Controls.Add(MakeStatCard("Orders Today", "🧾", "142", "↑ 8 since morning", UITheme.ColBlue), 1, 0);
+            cardRow.Controls.Add(MakeStatCard("Low Stock",    "⚠", "5 items", "Needs restocking", UITheme.ColRed), 2, 0);
+            cardRow.Controls.Add(MakeStatCard("Active Users", "👤", "3", _user.Name + " online", UITheme.ColPurple), 3, 0);
             contentArea.Controls.Add(cardRow);
 
             // Recent transactions header
@@ -398,7 +398,7 @@ namespace POSWinForms.Views
             contentArea.Controls.Add(txnList);
         }
 
-        private Panel MakeStatCard(string title, string value, string sub, Color accentColor)
+        private Panel MakeStatCard(string title, string icon, string value, string sub, Color accentColor)
         {
             var card = new Panel
             {
@@ -419,20 +419,34 @@ namespace POSWinForms.Views
                 using var cardBrush = new SolidBrush(UITheme.ColCard);
                 using var cardPath = UITheme.RoundedRect(new Rectangle(0, 0, card.Width - 3, card.Height - 4), UITheme.RadiusCard);
                 g.FillPath(cardBrush, cardPath);
-                // Accent left stripe (rounded on left side only)
-                using var accentBrush = new SolidBrush(accentColor);
-                using var stripePath = UITheme.RoundedRect(new Rectangle(0, 0, 6, card.Height - 4), UITheme.RadiusCard);
-                g.FillPath(accentBrush, stripePath);
+
+                // Icon Background Circle
+                using var iconBg = new SolidBrush(Color.FromArgb(20, accentColor.R, accentColor.G, accentColor.B));
+                g.FillEllipse(iconBg, card.Width - 50, 12, 34, 34);
+
                 card.Region = new System.Drawing.Region(cardPath);
             };
 
-            var lblTitle = new Label { Text = title, Font = UITheme.FontSmall, ForeColor = UITheme.ColTextMuted, Location = new Point(18, 16), AutoSize = true, BackColor = Color.Transparent };
-            var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 18, FontStyle.Bold), ForeColor = UITheme.ColTextPrimary, Location = new Point(16, 36), AutoSize = true, BackColor = Color.Transparent };
-            var lblSub   = new Label { Text = sub,   Font = UITheme.FontSmall,  ForeColor = accentColor, Location = new Point(18, 74), AutoSize = true, BackColor = Color.Transparent };
+            var lblTitle = new Label { Text = title, Font = UITheme.FontSmall, ForeColor = UITheme.ColTextMuted, Location = new Point(16, 16), AutoSize = true, BackColor = Color.Transparent };
+            var lblValue = new Label { Text = value, Font = new Font("Segoe UI", 18, FontStyle.Bold), ForeColor = UITheme.ColTextPrimary, Location = new Point(14, 34), AutoSize = true, BackColor = Color.Transparent };
+            var lblSub   = new Label { Text = sub,   Font = UITheme.FontSmall,  ForeColor = accentColor, Location = new Point(16, 72), AutoSize = true, BackColor = Color.Transparent };
+
+            var lblIcon = new Label
+            {
+                Text = icon,
+                Font = new Font("Segoe UI Emoji", 12),
+                ForeColor = accentColor,
+                Location = new Point(card.Width - 49, 19),
+                Size = new Size(32, 20),
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.Transparent
+            };
+            card.SizeChanged += (s, e) => lblIcon.Left = card.Width - 49;
 
             card.Controls.Add(lblTitle);
             card.Controls.Add(lblValue);
             card.Controls.Add(lblSub);
+            card.Controls.Add(lblIcon);
             return card;
         }
 

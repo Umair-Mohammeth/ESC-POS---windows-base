@@ -14,7 +14,6 @@ namespace POSWinForms.Views
         private RadioButton rbCash, rbCard;
         private TextBox txtTender, txtCardNum, txtExpiry, txtCvv;
         private Label lblChange;
-        private Panel lblUsdPanel;
         private Label lblUsdTotalLabel;
 
         private decimal subtotal = 0m;
@@ -57,133 +56,168 @@ namespace POSWinForms.Views
             // ── LEFT PANEL — Product Browser & Cart ─────────────────────
             var leftPanel = new Panel { Dock = DockStyle.Fill, BackColor = UITheme.ColBackground };
             
-            // Product Browser (Scrollable buttons)
+            // Product Browser — light card style
             var productBrowser = new FlowLayoutPanel
             {
                 Dock = DockStyle.Left,
-                Width = 260,
+                Width = 270,
                 AutoScroll = true,
-                Padding = new Padding(12),
-                BackColor = UITheme.ColSidebar, // Darker contrast
+                Padding = new Padding(10, 10, 4, 10),
+                BackColor = UITheme.ColBackground,
                 WrapContents = true
             };
-            
-            // Cart Pad
-            var cartPad = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 16, 16, 16), BackColor = UITheme.ColBackground };
 
-            var lblCartTitle = new Label
+            // Header label
+            var lblBrowserTitle = new Label
             {
-                Text = "Current Transaction",
-                Font = UITheme.FontH2,
-                ForeColor = UITheme.ColTextPrimary,
-                Location = new Point(0, 0),
-                AutoSize = true
+                Text = "Products",
+                Font = UITheme.FontBold10,
+                ForeColor = UITheme.ColTextMuted,
+                Margin = new Padding(4, 4, 4, 8),
+                AutoSize = false,
+                Size = new Size(246, 24),
+                TextAlign = ContentAlignment.MiddleLeft
             };
+            productBrowser.Controls.Add(lblBrowserTitle);
 
-            // Search bar
-            var searchPanel = new Panel
-            {
-                Location = new Point(0, 34),
-                Size = new Size(520, 38),
-                BackColor = Color.White,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
-            };
-            searchPanel.Paint += (s, e) =>
-            {
-                using var pen = new Pen(UITheme.ColBorder, 1);
-                e.Graphics.DrawRectangle(pen, 0, 0, searchPanel.Width - 1, searchPanel.Height - 1);
-            };
-            var lblSearchIcon = new Label
-            {
-                Text = "🔍",
-                Font = new Font("Segoe UI Emoji", 11),
-                Location = new Point(8, 7),
-                AutoSize = true,
-                BackColor = Color.White
-            };
-            var txtSearch = new TextBox
-            {
-                BorderStyle = BorderStyle.None,
-                Font = UITheme.FontBody,
-                ForeColor = UITheme.ColTextPrimary,
-                Location = new Point(36, 10),
-                Size = new Size(460, 20),
-                BackColor = Color.White,
-            };
-            searchPanel.Controls.Add(lblSearchIcon);
-            searchPanel.Controls.Add(txtSearch);
+            // Separator
+            var sep = new Panel { Size = new Size(246, 1), BackColor = UITheme.ColBorder, Margin = new Padding(0, 0, 0, 8) };
+            productBrowser.Controls.Add(sep);
 
-            // Cart ListView
-            lvCart = new ListView
-            {
-                Location = new Point(0, 82),
-                Size = new Size(520, 340),
-                View = View.Details,
-                FullRowSelect = true,
-                GridLines = false,
-                BorderStyle = BorderStyle.None,
-                BackColor = UITheme.ColCard,
-                Font = UITheme.FontBody,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
-            };
-            lvCart.Columns.Add("Product",  200);
-            lvCart.Columns.Add("Qty",       60);
-            lvCart.Columns.Add("Unit Price",100);
-            lvCart.Columns.Add("Subtotal",  100);
-            lvCart.Columns.Add("Remove",     60);
-
-            // Cart header with border
-            var cartHeader = new Panel
-            {
-                Location = new Point(0, 76),
-                Size = new Size(520, 6),
-                BackColor = Color.Transparent
-            };
-            cartHeader.Paint += (s, e) =>
-            {
-                using var brush = new SolidBrush(UITheme.ColAccent);
-                e.Graphics.FillRectangle(brush, 0, 5, 520, 1);
-            };
-
-            // Clear cart button
-            var btnClear = new Button
-            {
-                Text = "🗑  Clear Cart",
-                Location = new Point(0, lvCart.Bottom + 10),
-                Size = new Size(130, 34),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
-            };
-            UITheme.StyleDanger(btnClear);
-            btnClear.Click += (s, e) => { lvCart.Items.Clear(); subtotal = 0; UpdateTotals(); };
-
-            // Load products into browser
+            // Load products
             try {
                 var db = DatabaseContext.Instance; db.Connection.Open();
                 using var cmd = db.Connection.CreateCommand();
                 cmd.CommandText = "SELECT name, price FROM products";
                 using var r = cmd.ExecuteReader();
+                string[] icons = { "☕","🥛","🥐","🧋","🍵","🫖","🍰","🧃" };
+                int idx = 0;
                 while (r.Read()) {
                     string name = r["name"].ToString();
                     decimal price = Convert.ToDecimal(r["price"]);
-                    var btn = new Button { 
-                        Text = $"{name}\nRs. {price:F2}", 
-                        Size = new Size(110, 80), 
+                    string icon = icons[idx++ % icons.Length];
+
+                    // Card panel
+                    var card = new Panel
+                    {
+                        Size = new Size(118, 110),
                         Margin = new Padding(4),
-                        TextAlign = ContentAlignment.MiddleCenter
+                        BackColor = UITheme.ColCard,
+                        Cursor = Cursors.Hand,
+                        Tag = new object[] { name, price }
                     };
-                    UITheme.StylePrimary(btn);
-                    btn.Font = UITheme.FontSmall;
-                    btn.Click += (s, e) => AddCartItem(name, 1, price);
-                    productBrowser.Controls.Add(btn);
+
+                    // Rounded card paint
+                    card.Paint += (s, e) =>
+                    {
+                        var g = e.Graphics;
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                        using var shadowBrush = new SolidBrush(Color.FromArgb(10, 0, 0, 0));
+                        using var shadowPath = UITheme.RoundedRect(new Rectangle(2, 3, card.Width - 3, card.Height - 3), 12);
+                        g.FillPath(shadowBrush, shadowPath);
+                        using var cardBrush = new SolidBrush(card.BackColor);
+                        using var cardPath = UITheme.RoundedRect(new Rectangle(0, 0, card.Width - 2, card.Height - 2), 12);
+                        g.FillPath(cardBrush, cardPath);
+                        card.Region = new System.Drawing.Region(cardPath);
+                    };
+
+                    // Icon label
+                    var lblIcon = new Label
+                    {
+                        Text = icon,
+                        Font = new Font("Segoe UI Emoji", 18),
+                        Location = new Point(0, 8),
+                        Size = new Size(116, 36),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        BackColor = Color.Transparent
+                    };
+
+                    // Product name (truncate)
+                    string shortName = name.Length > 16 ? name.Substring(0, 14) + ".." : name;
+                    var lblName = new Label
+                    {
+                        Text = shortName,
+                        Font = UITheme.FontSmall,
+                        ForeColor = UITheme.ColTextPrimary,
+                        Location = new Point(4, 48),
+                        Size = new Size(110, 18),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        BackColor = Color.Transparent
+                    };
+
+                    // Price badge
+                    var lblPrice = new Label
+                    {
+                        Text = $"Rs. {price:F2}",
+                        Font = new Font("Segoe UI", 8, FontStyle.Bold),
+                        ForeColor = UITheme.ColAccent,
+                        Location = new Point(4, 70),
+                        Size = new Size(110, 18),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        BackColor = Color.Transparent
+                    };
+
+                    // Add-to-cart "+" button
+                    var btnAdd = new Label
+                    {
+                        Text = "+",
+                        Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                        ForeColor = Color.White,
+                        BackColor = UITheme.ColAccent,
+                        Location = new Point(42, 88),
+                        Size = new Size(34, 18),
+                        TextAlign = ContentAlignment.MiddleCenter,
+                        Cursor = Cursors.Hand
+                    };
+
+                    card.Controls.AddRange(new Control[] { lblIcon, lblName, lblPrice, btnAdd });
+
+                    // Hover effect
+                    EventHandler enterHandler = (s2, e2) => { card.BackColor = UITheme.ColRowAlt; card.Invalidate(); };
+                    EventHandler leaveHandler = (s2, e2) => { card.BackColor = UITheme.ColCard; card.Invalidate(); };
+                    card.MouseEnter += enterHandler; card.MouseLeave += leaveHandler;
+                    foreach (Control c in card.Controls) { c.MouseEnter += enterHandler; c.MouseLeave += leaveHandler; }
+
+                    // Click anywhere on card adds item
+                    EventHandler clickHandler = (s2, e2) => AddCartItem(name, 1, price);
+                    card.Click += clickHandler;
+                    foreach (Control c in card.Controls) c.Click += clickHandler;
+
+                    productBrowser.Controls.Add(card);
                 }
                 db.Connection.Close();
             } catch (Exception ex) {
-                MessageBox.Show($"Error loading products: {ex.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                productBrowser.Controls.Add(new Label { Text = "⚠ " + ex.Message, ForeColor = UITheme.ColRed, AutoSize = true, Margin = new Padding(8) });
             }
+
+            // Cart Pad
+            var cartPad = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16, 16, 16, 16), BackColor = UITheme.ColBackground };
+
+            var lblCartTitle = new Label { Text = "Current Transaction", Font = UITheme.FontH2, ForeColor = UITheme.ColTextPrimary, Location = new Point(0, 0), AutoSize = true };
+
+            // Rounded search bar
+            var searchPanel = new Panel { Location = new Point(0, 34), Size = new Size(520, 38), BackColor = Color.White, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+            searchPanel.Paint += (s, e) => {
+                e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using var path = UITheme.RoundedRect(new Rectangle(0, 0, searchPanel.Width - 1, searchPanel.Height - 1), 8);
+                using var b = new SolidBrush(Color.White); e.Graphics.FillPath(b, path);
+                using var pen = new Pen(UITheme.ColBorder, 1.5f); e.Graphics.DrawPath(pen, path);
+                searchPanel.Region = new System.Drawing.Region(path);
+            };
+            searchPanel.Controls.Add(new Label { Text = "🔍", Font = new Font("Segoe UI Emoji", 11), Location = new Point(8, 7), AutoSize = true, BackColor = Color.White });
+            var txtSearch = new TextBox { BorderStyle = BorderStyle.None, Font = UITheme.FontBody, ForeColor = UITheme.ColTextPrimary, Location = new Point(36, 10), Size = new Size(460, 20), BackColor = Color.White };
+            searchPanel.Controls.Add(txtSearch);
+
+            lvCart = new ListView { Location = new Point(0, 84), Size = new Size(520, 340), View = View.Details, FullRowSelect = true, GridLines = false, BorderStyle = BorderStyle.None, BackColor = UITheme.ColCard, Font = UITheme.FontBody, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom };
+            lvCart.Columns.Add("Product", 200); lvCart.Columns.Add("Qty", 60); lvCart.Columns.Add("Unit Price", 100); lvCart.Columns.Add("Subtotal", 100); lvCart.Columns.Add("Remove", 60);
+
+            var btnClear = new Button { Text = "🗑  Clear Cart", Location = new Point(0, lvCart.Bottom + 10), Size = new Size(130, 34), Anchor = AnchorStyles.Bottom | AnchorStyles.Left };
+            UITheme.StyleDanger(btnClear);
+            btnClear.Click += (s, e) => { lvCart.Items.Clear(); subtotal = 0; UpdateTotals(); UpdateChange(); };
 
             cartPad.Controls.AddRange(new Control[] { lblCartTitle, searchPanel, lvCart, btnClear });
             leftPanel.Controls.Add(cartPad);
-            leftPanel.Controls.Add(productBrowser); // Add product browser last so it docks left
+            leftPanel.Controls.Add(productBrowser);
             splitContainer.Panel1.Controls.Add(leftPanel);
 
             // ═══════════════════════════════════════════════
@@ -209,11 +243,7 @@ namespace POSWinForms.Views
                 BackColor = UITheme.ColCard,
                 Padding = new Padding(16)
             };
-            totalsCard.Paint += (s, e) =>
-            {
-                using var pen = new Pen(UITheme.ColBorder, 1);
-                e.Graphics.DrawRectangle(pen, 0, 0, totalsCard.Width - 1, totalsCard.Height - 1);
-            };
+            totalsCard.Paint += UITheme.PaintCardShadow;
 
             MakeTotalRow(totalsCard, "Subtotal",      16,  out lblSubtotal, UITheme.ColTextPrimary);
             var divRow = new Panel { Location = new Point(16, 66), Size = new Size(228, 1), BackColor = UITheme.ColBorder };
